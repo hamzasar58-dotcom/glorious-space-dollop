@@ -1,82 +1,68 @@
 # Troll Room Bot
 
-    Discord sunucularında kullanıcıların menüden rol alıp bırakmasını sağlayan rol menüsü botu.
+Discord sunucularında kullanıcıların menüden rol alıp bırakmasını sağlayan rol menüsü botu.
 
-    ## Kurulum
+## Gereksinimler
 
-    ### Linux, Codespaces veya macOS
+- Node.js 18 veya daha yeni sürüm
+- Discord bot tokenı
 
-    ```bash
-    bash ./install.sh
-    ```
+## Kurulum
 
-    ### Windows
+GitHub Codespaces, Linux veya macOS terminalinde proje klasöründe çalıştırın:
 
-    ```text
-    install.bat
-    ```
+```bash
+bash install.sh
+```
 
-    Kurulumdan sonra oluşan .env dosyasını açıp bot tokenını ekleyin:
+Kurulumdan sonra oluşan .env dosyasını açıp tokenı ekleyin:
 
-    ```env
-    DISCORD_TOKEN=bot_tokeniniz
-    ```
+```env
+DISCORD_TOKEN=bot_tokeniniz
+```
 
-    Tokenı GitHub'a yüklemeyin.
+Tokenı GitHub'a yüklemeyin.
 
-    ## Başlatma
+## Başlatma
 
-    ### Linux, Codespaces veya macOS
+```bash
+bash start.sh
+```
 
-    ```bash
-    bash ./start.sh
-    ```
+Alternatif: `npm start`
 
-    ### Windows
+## Discord ayarları
 
-    ```text
-    start.bat
-    ```
+Developer Portal içindeki **Bot** sayfasında şu ayarları açın:
 
-    Alternatif olarak doğrudan çalıştırabilirsiniz:
+- **Server Members Intent**
+- **Message Content Intent**
 
-    ```bash
-    npm start
-    ```
+**Presence Intent** gerekli değildir.
 
-    ## Discord ayarları
+Botun rolü, vereceği rollerin üstünde olmalıdır. Botta en az şu izinler bulunmalıdır:
 
-    Developer Portal içindeki **Bot** sayfasında şu ayarları açın:
+- Rolleri Yönet
+- Kanalları Görüntüle
+- Mesaj Gönder
+- Mesaj Geçmişini Oku
 
-    - **Server Members Intent**
-    - **Message Content Intent**
+Test için botun rolüne **Yönetici** verebilirsiniz; fakat rol sıralaması kuralı yine geçerlidir.
 
-    **Presence Intent** gerekli değildir.
+## Komutlar
 
-    Botun rolü, vereceği rollerin üstünde olmalıdır. Botta en az şu izinler bulunmalıdır:
+```text
+!help
+!rolmenu-ayarla #rol-menusu
+!rol-ekle @Rol 🎉 Rol açıklaması
+!rol-sil @Rol
+!rolmenu-yenile
+!admin-rol-ekle @Yetkili
+!admin-rol-kaldir @Yetkili
+```
 
-    - Rolleri Yönet
-    - Kanalları Görüntüle
-    - Mesaj Gönder
-    - Mesaj Geçmişini Oku
+Rol menüsü oluşturulduktan sonra yetkili kişiler menüdeki **Yönetici: menüye rol ekle** alanından doğrudan bir Discord rolü seçebilir.
 
-    Test için botun rolüne **Yönetici** de verebilirsiniz; fakat rol sıralaması kuralı yine geçerlidir.
+## Veri kaydı
 
-    ## Komutlar
-
-    ```text
-    !help
-    !rolmenu-ayarla #rol-menusu
-    !rol-ekle @Rol 🎉 Rol açıklaması
-    !rol-sil @Rol
-    !rolmenu-yenile
-    !admin-rol-ekle @Yetkili
-    !admin-rol-kaldir @Yetkili
-    ```
-
-    Rol menüsü oluşturulduktan sonra yetkili kişiler menüdeki **Yönetici: menüye rol ekle** alanından doğrudan bir Discord rolü seçebilir.
-
-    ## Veri kaydı
-
-    Sunucu ayarları data/role-menu.json dosyasında tutulur. Geçici dosya sistemi kullanan hosting servislerinde yeniden başlatma sonrası bu dosya silinebilir.
-    
+Sunucu ayarları data/role-menu.json dosyasında tutulur. Geçici dosya sistemi kullanan hosting servislerinde yeniden başlatma sonrası bu dosya silinebilir.
