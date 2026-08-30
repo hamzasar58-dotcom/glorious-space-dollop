@@ -109,17 +109,21 @@ function buildRoleMenu(guildId) {
 }
 
 function buildAdminButtons() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('role-admin-title').setLabel('Başlık').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('role-admin-description').setLabel('Açıklama').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('role-admin-add-role').setLabel('Rol Ekle').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('role-admin-remove-role').setLabel('Rol Kaldır').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('role-admin-add-admin').setLabel('Admin Ekle').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('role-admin-remove-admin').setLabel('Admin Sil').setStyle(ButtonStyle.Danger)
-  );
-}
+    return [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('role-admin-title').setLabel('Başlık').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('role-admin-description').setLabel('Açıklama').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('role-admin-add-role').setLabel('Rol Ekle').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('role-admin-remove-role').setLabel('Rol Kaldır').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('role-admin-add-admin').setLabel('Admin Ekle').setStyle(ButtonStyle.Success)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('role-admin-remove-admin').setLabel('Admin Sil').setStyle(ButtonStyle.Danger)
+      )
+    ];
+    }
 
-function buildEmbed(guildId) {
+    function buildEmbed(guildId) {
   const config = getGuildConfig(guildId);
   return new EmbedBuilder()
     .setColor('#5865F2')
@@ -139,7 +143,7 @@ async function refreshRoleMenu(guildId) {
   const message = config.messageId ? await channel.messages.fetch(config.messageId).catch(() => null) : null;
   const payload = {
     embeds: [buildEmbed(guildId)],
-    components: [buildRoleMenu(guildId), buildAdminButtons()],
+    components: [buildRoleMenu(guildId), ...buildAdminButtons()],
   };
 
   if (message) {
@@ -195,7 +199,7 @@ async function handlePrefixCommand(message) {
     data.guilds[message.guild.id] = config;
     saveData(data);
 
-    const sent = await channel.send({ embeds: [buildEmbed(message.guild.id)], components: [buildRoleMenu(message.guild.id), buildAdminButtons()] });
+    const sent = await channel.send({ embeds: [buildEmbed(message.guild.id)], components: [buildRoleMenu(message.guild.id), ...buildAdminButtons()] });
     const updated = loadData();
     updated.guilds[message.guild.id].messageId = sent.id;
     updated.guilds[message.guild.id].menuChannelId = channel.id;
@@ -468,4 +472,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+const token = process.env.DISCORD_TOKEN?.trim();
+
+    if (!token) {
+    console.error('DISCORD_TOKEN ortam değişkeni eksik. .env dosyasına veya hosting ortamının secrets bölümüne ekleyin.');
+    process.exitCode = 1;
+    } else {
+    client.login(token).catch((error) => {
+      console.error('Discord giriş başarısız:', error);
+      process.exitCode = 1;
+    });
+    }
