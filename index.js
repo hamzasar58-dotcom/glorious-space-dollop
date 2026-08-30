@@ -293,7 +293,19 @@ async function handlePrefixCommand(message) {
   await message.reply('Bilinmeyen komut. `!help` yazıp komut listesini gör.');
 }
 
-client.on(Events.MessageCreate, handlePrefixCommand);
+client.once(Events.ClientReady, (readyClient) => {
+  console.log('Bot hazır: ' + readyClient.user.tag);
+});
+
+client.on(Events.Error, (error) => {
+  console.error('Discord istemci hatası:', error);
+});
+
+client.on(Events.MessageCreate, (message) => {
+  void handlePrefixCommand(message).catch((error) => {
+    console.error('Prefix komutu işlenemedi:', error);
+  });
+});
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.guild) return;
@@ -457,18 +469,34 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     const updates = [];
+    const failed = [];
     for (const roleId of selected) {
       const role = interaction.guild.roles.cache.get(roleId);
       if (!role) continue;
-      if (member.roles.cache.has(roleId)) {
-        await member.roles.remove(role).catch(() => {});
-        updates.push(`Rol kaldırıldı: ${role.name}`);
-      } else {
-        await member.roles.add(role).catch(() => {});
-        updates.push(`Rol verildi: ${role.name}`);
+
+      if (!role.editable) {
+        failed.push(role.name + ' (botun en yüksek rolü bu rolden yukarıda olmalı)');
+        continue;
+      }
+
+      try {
+        if (member.roles.cache.has(roleId)) {
+          await member.roles.remove(role);
+          updates.push('Rol kaldırıldı: ' + role.name);
+        } else {
+          await member.roles.add(role);
+          updates.push('Rol verildi: ' + role.name);
+        }
+      } catch (error) {
+        console.error('Rol güncellenemedi (' + role.id + '):', error);
+        failed.push(role.name);
       }
     }
 
+    const response = [
+      ...updates,
+      ...failed.map((name) => 'Rol güncellenemedi: ' + name),
+    ];
     await interaction.reply({ content: updates.join(' | ') || 'İşlem gerçekleşmedi.', ephemeral: true });
   }
 });
