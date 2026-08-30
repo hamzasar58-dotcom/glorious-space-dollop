@@ -12,6 +12,7 @@ const {
   ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  RoleSelectMenuBuilder,
   PermissionFlagsBits,
   ModalBuilder,
   TextInputBuilder,
@@ -109,6 +110,16 @@ function buildRoleMenu(guildId) {
   return new ActionRowBuilder().addComponents(menu);
 }
 
+function buildAdminRoleSelect() {
+  return new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('role-admin-role-select')
+      .setPlaceholder('Yönetici: menüye rol ekle')
+      .setMinValues(1)
+      .setMaxValues(1)
+  );
+}
+
 function buildAdminButtons() {
     return [
       new ActionRowBuilder().addComponents(
@@ -144,7 +155,7 @@ async function refreshRoleMenu(guildId) {
   const message = config.messageId ? await channel.messages.fetch(config.messageId).catch(() => null) : null;
   const payload = {
     embeds: [buildEmbed(guildId)],
-    components: [buildRoleMenu(guildId), ...buildAdminButtons()],
+    components: [buildRoleMenu(guildId), buildAdminRoleSelect(), ...buildAdminButtons()],
   };
 
   if (message) {
@@ -200,7 +211,7 @@ async function handlePrefixCommand(message) {
     data.guilds[message.guild.id] = config;
     saveData(data);
 
-    const sent = await channel.send({ embeds: [buildEmbed(message.guild.id)], components: [buildRoleMenu(message.guild.id), ...buildAdminButtons()] });
+    const sent = await channel.send({ embeds: [buildEmbed(message.guild.id)], components: [buildRoleMenu(message.guild.id), buildAdminRoleSelect(), ...buildAdminButtons()] });
     const updated = loadData();
     updated.guilds[message.guild.id].messageId = sent.id;
     updated.guilds[message.guild.id].menuChannelId = channel.id;
@@ -365,6 +376,40 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.showModal(modal);
       return;
     }
+  }
+
+  if (interaction.isRoleSelectMenu() && interaction.customId === 'role-admin-role-select') {
+    if (!isAdmin(interaction.member, interaction.guild)) {
+      await interaction.reply({ content: 'Bu işlemi yapmak için yetkili olmanız gerekiyor.', ephemeral: true });
+      return;
+    }
+
+    const role = interaction.roles.first();
+    if (!role) {
+      await interaction.reply({ content: 'Geçerli bir rol seçilmedi.', ephemeral: true });
+      return;
+    }
+
+    if (role.managed || !role.editable) {
+      await interaction.reply({ content: 'Bu rol menüye eklenemez. Botun rolü seçilen rolden yukarıda olmalı.', ephemeral: true });
+      return;
+    }
+
+    const guildId = interaction.guild.id;
+    const data = loadData();
+    const config = data.guilds[guildId] || getGuildConfig(guildId);
+    const existing = config.roles.find((entry) => entry.roleId === role.id);
+    config.roles = config.roles.filter((entry) => entry.roleId !== role.id);
+    config.roles.push({
+      roleId: role.id,
+      emoji: existing?.emoji || '🎭',
+      description: existing?.description || 'Rol seçimi',
+    });
+    data.guilds[guildId] = config;
+    saveData(data);
+    await refreshRoleMenu(guildId);
+    await interaction.reply({ content: role.name + ' rolü menüye eklendi.', ephemeral: true });
+    return;
   }
 
   if (interaction.isModalSubmit()) {
